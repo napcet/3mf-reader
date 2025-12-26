@@ -116,24 +116,193 @@ class MarkdownReportGenerator:
         lines = [
             "## ⚙️ Configurações",
             "",
+            "### Qualidade",
+            "",
             "| Parâmetro | Valor |",
             "|-----------|-------|",
-            f"| Layer height | {settings.layer_height}mm |",
+            f"| Altura de camada | {settings.layer_height}mm |",
             f"| Primeira camada | {settings.initial_layer_height}mm |",
             f"| Paredes | {settings.wall_loops} |",
             f"| Topo/Fundo | {settings.top_shell_layers}/{settings.bottom_shell_layers} camadas |",
-            f"| Preenchimento | {settings.infill_density} |",
-            f"| Temp. bico | {settings.nozzle_temp}°C |",
-            f"| Temp. mesa | {settings.bed_temp}°C ({settings.bed_type}) |",
+            f"| Preenchimento | {settings.infill_density} ({self._format_pattern(settings.infill_pattern)}) |",
         ]
         
-        if settings.support_enabled:
-            lines.append(f"| Suporte | ✅ {settings.support_type or 'Ativado'} |")
-        else:
-            lines.append("| Suporte | ❌ Desativado |")
+        # Largura de linha
+        if settings.line_width:
+            lines.append(f"| Largura de linha | {settings.line_width}mm |")
+        if settings.outer_wall_line_width and settings.outer_wall_line_width != settings.line_width:
+            lines.append(f"| Largura parede externa | {settings.outer_wall_line_width}mm |")
+        
+        # Costura
+        if settings.seam_position:
+            seam_names = {
+                'aligned': 'Alinhada',
+                'back': 'Traseira',
+                'random': 'Aleatória',
+                'nearest': 'Mais próxima'
+            }
+            lines.append(f"| Posição da costura | {seam_names.get(settings.seam_position, settings.seam_position)} |")
         
         lines.append("")
+        
+        # Velocidades
+        lines.extend([
+            "### Velocidades",
+            "",
+            "| Parâmetro | Valor |",
+            "|-----------|-------|",
+        ])
+        
+        if settings.outer_wall_speed:
+            lines.append(f"| Parede externa | {settings.outer_wall_speed} mm/s |")
+        if settings.inner_wall_speed:
+            lines.append(f"| Parede interna | {settings.inner_wall_speed} mm/s |")
+        if settings.infill_speed:
+            lines.append(f"| Preenchimento | {settings.infill_speed} mm/s |")
+        if settings.top_surface_speed:
+            lines.append(f"| Superfície superior | {settings.top_surface_speed} mm/s |")
+        if settings.initial_layer_speed:
+            lines.append(f"| Primeira camada | {settings.initial_layer_speed} mm/s |")
+        if settings.travel_speed:
+            lines.append(f"| Viagem | {settings.travel_speed} mm/s |")
+        
+        lines.append("")
+        
+        # Aceleração
+        if settings.default_acceleration or settings.outer_wall_acceleration:
+            lines.extend([
+                "### Aceleração",
+                "",
+                "| Parâmetro | Valor |",
+                "|-----------|-------|",
+            ])
+            if settings.default_acceleration:
+                lines.append(f"| Padrão | {settings.default_acceleration} mm/s² |")
+            if settings.outer_wall_acceleration:
+                lines.append(f"| Parede externa | {settings.outer_wall_acceleration} mm/s² |")
+            if settings.inner_wall_acceleration and settings.inner_wall_acceleration != settings.outer_wall_acceleration:
+                lines.append(f"| Parede interna | {settings.inner_wall_acceleration} mm/s² |")
+            lines.append("")
+        
+        # Temperaturas
+        lines.extend([
+            "### Temperaturas",
+            "",
+            "| Parâmetro | Valor |",
+            "|-----------|-------|",
+            f"| Bico | {settings.nozzle_temp}°C |",
+        ])
+        if settings.nozzle_temp_initial != settings.nozzle_temp:
+            lines.append(f"| Bico (1ª camada) | {settings.nozzle_temp_initial}°C |")
+        lines.append(f"| Mesa | {settings.bed_temp}°C ({settings.bed_type}) |")
+        lines.append("")
+        
+        # Retração
+        if settings.retraction_length or settings.z_hop:
+            lines.extend([
+                "### Retração",
+                "",
+                "| Parâmetro | Valor |",
+                "|-----------|-------|",
+            ])
+            if settings.retraction_length:
+                lines.append(f"| Distância | {settings.retraction_length}mm |")
+            if settings.retraction_speed:
+                lines.append(f"| Velocidade | {settings.retraction_speed} mm/s |")
+            if settings.z_hop:
+                z_hop_info = f"{settings.z_hop}mm"
+                if settings.z_hop_type:
+                    z_hop_info += f" ({settings.z_hop_type})"
+                lines.append(f"| Z-Hop | {z_hop_info} |")
+            lines.append("")
+        
+        # Ventilação
+        if settings.fan_max_speed:
+            lines.extend([
+                "### Ventilação",
+                "",
+                "| Parâmetro | Valor |",
+                "|-----------|-------|",
+            ])
+            if settings.fan_min_speed == settings.fan_max_speed:
+                lines.append(f"| Velocidade | {settings.fan_max_speed}% |")
+            else:
+                lines.append(f"| Mínima | {settings.fan_min_speed}% |")
+                lines.append(f"| Máxima | {settings.fan_max_speed}% |")
+            lines.append("")
+        
+        # Recursos especiais
+        special_features = []
+        
+        # Suporte
+        if settings.support_enabled:
+            special_features.append(f"✅ Suporte: {settings.support_type or 'Ativado'}")
+        
+        # Adesão
+        if settings.brim_type:
+            brim_names = {
+                'auto_brim': 'Auto',
+                'brim_ears': 'Orelhas',
+                'outer_only': 'Externo',
+                'inner_only': 'Interno',
+                'outer_and_inner': 'Completo'
+            }
+            brim_name = brim_names.get(settings.brim_type, settings.brim_type)
+            brim_info = f"Brim {brim_name}"
+            if settings.brim_width:
+                brim_info += f" ({settings.brim_width}mm)"
+            special_features.append(f"✅ {brim_info}")
+        elif settings.skirt_loops and settings.skirt_loops > 0:
+            special_features.append(f"✅ Skirt ({settings.skirt_loops} voltas)")
+        
+        # Ironing
+        if settings.ironing_enabled:
+            special_features.append("✅ Ironing ativado")
+        
+        # Fuzzy skin
+        if settings.fuzzy_skin:
+            special_features.append(f"✅ Fuzzy Skin: {settings.fuzzy_skin}")
+        
+        if special_features:
+            lines.extend([
+                "### Recursos Especiais",
+                "",
+            ])
+            for feature in special_features:
+                lines.append(f"- {feature}")
+            if not settings.support_enabled:
+                lines.append("- ❌ Suporte desativado")
+            lines.append("")
+        else:
+            # Apenas mostrar suporte desativado se não há outros recursos
+            lines.append("- ❌ Suporte desativado")
+            lines.append("")
+        
         return '\n'.join(lines)
+    
+    @staticmethod
+    def _format_pattern(pattern: str) -> str:
+        """Formata nome do padrão de preenchimento"""
+        patterns = {
+            'grid': 'Grade',
+            'gyroid': 'Gyroid',
+            'honeycomb': 'Colmeia',
+            'line': 'Linhas',
+            'cubic': 'Cúbico',
+            'triangles': 'Triângulos',
+            'lightning': 'Relâmpago',
+            'rectilinear': 'Retilíneo',
+            'alignedrectilinear': 'Retilíneo Alinhado',
+            'concentric': 'Concêntrico',
+            'hilbertcurve': 'Curva de Hilbert',
+            'archimedeanchords': 'Cordas de Arquimedes',
+            'octagramspiral': 'Espiral Octograma',
+            'supportcubic': 'Cúbico (suporte)',
+            'adaptivecubic': 'Cúbico Adaptativo',
+            '3dhoneycomb': 'Colmeia 3D',
+            'crosshatch': 'Hachurado'
+        }
+        return patterns.get(pattern.lower(), pattern.capitalize())
     
     def _objects_list(self) -> str:
         """Lista de objetos no projeto"""

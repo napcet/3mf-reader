@@ -371,6 +371,18 @@ class ThreeMFExtractor:
         elif 'eng' in bed_type.lower():
             bed_temp_key = 'eng_plate_temp'
         
+        # Tipo de ironing
+        ironing_type = self._get_setting('ironing_type', 'no ironing')
+        ironing_enabled = ironing_type and ironing_type != 'no ironing'
+        
+        # Fuzzy skin
+        fuzzy_skin = self._get_setting('fuzzy_skin', 'none')
+        if fuzzy_skin == 'none':
+            fuzzy_skin = None
+        
+        # Brim type
+        brim_type = self._get_setting('brim_type', 'no_brim')
+        
         return PrintSettings(
             layer_height=get_float('layer_height', 0.2),
             initial_layer_height=get_float('initial_layer_print_height', 0.2),
@@ -383,10 +395,42 @@ class ThreeMFExtractor:
             nozzle_temp_initial=get_int('nozzle_temperature_initial_layer', 200),
             bed_temp=get_int(bed_temp_key, 60),
             bed_type=bed_type,
-            print_speed=get_int('inner_wall_speed') or None,
+            # Velocidades
+            outer_wall_speed=get_int('outer_wall_speed') or None,
+            inner_wall_speed=get_int('inner_wall_speed') or None,
+            infill_speed=get_int('sparse_infill_speed') or None,
             travel_speed=get_int('travel_speed') or None,
+            initial_layer_speed=get_int('initial_layer_speed') or None,
+            top_surface_speed=get_int('top_surface_speed') or None,
+            # Aceleração
+            default_acceleration=get_int('default_acceleration') or None,
+            outer_wall_acceleration=get_int('outer_wall_acceleration') or None,
+            inner_wall_acceleration=get_int('inner_wall_acceleration') or None,
+            # Largura de linha
+            line_width=get_float('line_width') or None,
+            outer_wall_line_width=get_float('outer_wall_line_width') or None,
+            inner_wall_line_width=get_float('inner_wall_line_width') or None,
+            infill_line_width=get_float('sparse_infill_line_width') or None,
+            # Retração
+            retraction_length=get_float('retraction_length') or None,
+            retraction_speed=get_int('retraction_speed') or None,
+            z_hop=get_float('z_hop') or None,
+            z_hop_type=get_first('z_hop_types', None) if get_float('z_hop') else None,
+            # Ventilação
+            fan_min_speed=get_int('fan_min_speed') or None,
+            fan_max_speed=get_int('fan_max_speed') or None,
+            # Costura
+            seam_position=self._get_setting('seam_position', 'aligned'),
+            # Adesão
+            brim_type=brim_type if brim_type != 'no_brim' else None,
+            brim_width=get_float('brim_width') if brim_type not in ('no_brim', None) else None,
+            skirt_loops=get_int('skirt_loops') or None,
+            # Suporte
             support_enabled=self._get_setting('enable_support', '0') == '1',
-            support_type=self._get_setting('support_type') if self._get_setting('enable_support', '0') == '1' else None
+            support_type=self._get_setting('support_type') if self._get_setting('enable_support', '0') == '1' else None,
+            # Extras
+            ironing_enabled=ironing_enabled,
+            fuzzy_skin=fuzzy_skin
         )
     
     def _extract_statistics(self) -> Optional[PrintStatistics]:

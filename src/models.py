@@ -41,13 +41,50 @@ class PrintSettings:
     bed_temp: int
     bed_type: str  # "High Temp Plate", etc.
     
-    # Velocidades principais
-    print_speed: Optional[int] = None
+    # Velocidades (mm/s)
+    outer_wall_speed: Optional[int] = None
+    inner_wall_speed: Optional[int] = None
+    infill_speed: Optional[int] = None
     travel_speed: Optional[int] = None
+    initial_layer_speed: Optional[int] = None
+    top_surface_speed: Optional[int] = None
+    
+    # Aceleração (mm/s²)
+    default_acceleration: Optional[int] = None
+    outer_wall_acceleration: Optional[int] = None
+    inner_wall_acceleration: Optional[int] = None
+    
+    # Largura de linha (mm)
+    line_width: Optional[float] = None
+    outer_wall_line_width: Optional[float] = None
+    inner_wall_line_width: Optional[float] = None
+    infill_line_width: Optional[float] = None
+    
+    # Retração
+    retraction_length: Optional[float] = None
+    retraction_speed: Optional[int] = None
+    z_hop: Optional[float] = None
+    z_hop_type: Optional[str] = None
+    
+    # Ventilação
+    fan_min_speed: Optional[int] = None
+    fan_max_speed: Optional[int] = None
+    
+    # Costura
+    seam_position: Optional[str] = None
+    
+    # Adesão à mesa
+    brim_type: Optional[str] = None
+    brim_width: Optional[float] = None
+    skirt_loops: Optional[int] = None
     
     # Suporte
     support_enabled: bool = False
     support_type: Optional[str] = None
+    
+    # Extras
+    ironing_enabled: bool = False
+    fuzzy_skin: Optional[str] = None
 
 
 @dataclass
