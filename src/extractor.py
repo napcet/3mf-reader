@@ -114,7 +114,12 @@ class ThreeMFExtractor:
             
             # Extrair dados
             title = self._get_title()
+            
+            # Preferir generator do G-code (mais preciso) sobre metadata do 3MF
+            # OrcaSlicer é fork do BambuStudio e pode herdar o nome incorreto no 3MF
             application = self._get_metadata('Application') or 'Unknown'
+            if self._gcode_stats and self._gcode_stats.generator:
+                application = self._gcode_stats.generator
             
             # Extrair filamentos e atualizar com dados do G-code
             filaments = self._extract_filaments()
