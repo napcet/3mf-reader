@@ -153,6 +153,8 @@ class GCodeParser:
         if match:
             values = self._parse_csv_values(match.group(1))
             stats.weight_per_slot = {i+1: v for i, v in enumerate(values) if v > 0}
+            # Atualizar peso total somando os valores por slot (fallback caso não exista linha total)
+            stats.total_weight_grams = sum(values)
             return
         
         # Filamento usado por slot [mm]
